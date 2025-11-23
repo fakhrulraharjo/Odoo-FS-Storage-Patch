@@ -1,2 +1,0 @@
-id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_vrt_fs_storage_async_patch_vrt_fs_storage_async_patch,vrt_fs_storage_async_patch.vrt_fs_storage_async_patch,model_vrt_fs_storage_async_patch_vrt_fs_storage_async_patch,base.group_user,1,1,1,1
