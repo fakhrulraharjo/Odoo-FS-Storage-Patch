@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': "VRT FS Storage Async Patch",
-    'version': '18.0.2.0.0',
+    'version': '18.0.2.1.0',
     'summary': "Real-thread fsspec patch for gevent workers (defense-in-depth)",
     'description': """
 FS Storage Gevent Async Patch (v2 - Real Thread)
