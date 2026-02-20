@@ -1,36 +1,35 @@
 # -*- coding: utf-8 -*-
 {
     'name': "VRT FS Storage Async Patch",
-    'version': '18.0.1.0.0',
-    'summary': "Gevent compatibility patch for fs_storage with asyncio",
+    'version': '18.0.2.0.0',
+    'summary': "Real-thread fsspec patch for gevent workers (defense-in-depth)",
     'description': """
-FS Storage Gevent Compatibility Patch
-======================================
+FS Storage Gevent Async Patch (v2 - Real Thread)
+=================================================
 
-This module extends fs_storage to work with Odoo's gevent workers (workers > 0).
+Defense-in-depth layer that patches fsspec to use real OS threads under gevent.
 
 Problem:
 --------
-When Odoo runs with workers > 0, gevent monkey-patches Python's asyncio.
-The fs_storage module uses fsspec, which internally uses asyncio.
-This creates a nested event loop conflict: "NotImplementedError: Calling sync() from within a running loop"
+When Odoo runs with workers > 0, gevent monkey-patches threading/asyncio.
+fsspec's internal IO loop runs on a greenlet instead of a real OS thread,
+causing "NotImplementedError: Calling sync() from within a running loop".
 
-Solution:
----------
-This module inherits fs.storage and overrides _get_filesystem() to apply nest_asyncio
-before calling fsspec.filesystem(). This allows nested asyncio event loops to coexist
-with gevent's monkey-patched asyncio.
+Solution (dual-layer):
+----------------------
+1. PRIMARY: sitecustomize.py in the HA base Docker image patches fsspec at
+   Python startup, before any imports.
+2. SECONDARY (this module): At Odoo module load time, checks if the patch
+   was already applied. If not, applies the same real-thread patch as a
+   safety net for non-Docker environments.
 
 Technical Details:
 ------------------
-- Only applies patch when odoo.evented = True (workers > 0)
-- Uses nest_asyncio to allow nested event loops
-- Preserves all original fs_storage functionality
-- No changes needed to fs_storage configuration
-
-Requirements:
--------------
-- nest_asyncio Python package (added to base image requirements.txt)
+- Replaces fsspec.asyn.get_loop with a version that spawns a real OS thread
+- Uses gevent.monkey.get_original() to obtain unpatched Thread/Event classes
+- Marks patched function with _gevent_patched attribute to prevent double-patching
+- Falls back to nest_asyncio.apply() as additional safety net
+- Only activates when odoo.evented = True (gevent workers mode)
     """,
     'author': "Fakhrul Raharjo",
     'website': "https://vortex.so",
